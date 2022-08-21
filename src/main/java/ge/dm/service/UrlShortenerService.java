@@ -1,8 +1,10 @@
 package ge.dm.service;
 
 import com.google.common.hash.Hashing;
+import ge.dm.dao.interfaces.UrlShortenerDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.nio.charset.StandardCharsets;
 import java.util.random.RandomGenerator;
@@ -13,6 +15,13 @@ public class UrlShortenerService {
 
     private final RandomGenerator randomGenerator = RandomGenerator.getDefault();
 
+    private UrlShortenerDao urlShortenerDao;
+
+    @Autowired
+    public UrlShortenerService(UrlShortenerDao urlShortenerDao) {
+        this.urlShortenerDao = urlShortenerDao;
+    }
+
     public String shortenUrl(String url) {
 
         long salt = randomGenerator.nextLong();
@@ -21,12 +30,25 @@ public class UrlShortenerService {
 
         String hash = Hashing.sha256().hashString(urlSalt, StandardCharsets.UTF_8).toString();
 
-        logger.info("Generated hash: {} for URL: {}", hash, url);
-        return hash.substring(0, 6);
+        String shortenedHash = hash.substring(0, 6);
+        logger.info("Generated hash: {} for URL: {}", shortenedHash, url);
+
+        try {
+            urlShortenerDao.storeShortenedUrl(url, shortenedHash);
+        } catch (Exception ex) {
+            logger.warn("Unable to store shortened URL for: {} {}", url, ex);
+            return null;
+        }
+        return shortenedHash;
     }
 
     public String getOriginalUrl(String urlHash) {
-        return null;
+        try {
+            return urlShortenerDao.getOriginalUrl(urlHash);
+        } catch (Exception ex) {
+            logger.warn("Unable to get URL for hash: {} {}", urlHash, ex);
+            return null;
+        }
     }
 
 }
