@@ -8,8 +8,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-import java.io.IOException;
-
 public class ShortenUrlTest {
 
     @Mock
