@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
 @RestController
 public class UrlShortenerResource {
 
@@ -24,7 +26,7 @@ public class UrlShortenerResource {
     }
 
     @PostMapping("/shorten")
-    String shortenUrl(@PathVariable String url) {
-        return urlShortenerService.shortenUrl(url);
+    String shortenUrl(@PathVariable String url, @PathVariable Optional<String> alias) {
+        return urlShortenerService.shortenUrl(url, alias);
     }
 }

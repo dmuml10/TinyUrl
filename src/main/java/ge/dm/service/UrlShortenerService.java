@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.random.RandomGenerator;
 
 public class UrlShortenerService {
@@ -22,24 +23,36 @@ public class UrlShortenerService {
         this.urlShortenerDao = urlShortenerDao;
     }
 
-    public String shortenUrl(String url) {
+    public String shortenUrl(String url, Optional<String> alias) {
 
-        long salt = randomGenerator.nextLong();
+        if (alias.isPresent()) {
+            try {
+                urlShortenerDao.storeShortenedUrl(url, alias.get());
+            } catch (Exception ex) {
+                logger.warn("Unable to store shortened URL for: {} {}", url, ex);
+                return null;
+            }
+            return alias.get();
+        } else {
 
-        String urlSalt = url + salt;
 
-        String hash = Hashing.sha256().hashString(urlSalt, StandardCharsets.UTF_8).toString();
+            long salt = randomGenerator.nextLong();
 
-        String shortenedHash = hash.substring(0, 6);
-        logger.info("Generated hash: {} for URL: {}", shortenedHash, url);
+            String urlSalt = url + salt;
 
-        try {
-            urlShortenerDao.storeShortenedUrl(url, shortenedHash);
-        } catch (Exception ex) {
-            logger.warn("Unable to store shortened URL for: {} {}", url, ex);
-            return null;
+            String hash = Hashing.sha256().hashString(urlSalt, StandardCharsets.UTF_8).toString();
+
+            String shortenedHash = hash.substring(0, 6);
+            logger.info("Generated hash: {} for URL: {}", shortenedHash, url);
+
+            try {
+                urlShortenerDao.storeShortenedUrl(url, shortenedHash);
+            } catch (Exception ex) {
+                logger.warn("Unable to store shortened URL for: {} {}", url, ex);
+                return null;
+            }
+            return shortenedHash;
         }
-        return shortenedHash;
     }
 
     public String getOriginalUrl(String urlHash) {
